@@ -1,0 +1,30 @@
+{
+  "name": "narabooth",
+  "version": "1.0.0",
+  "description": "ならブース：イベントのブース受付・順番待ち管理（Cloudflare Workers 無料プランで動作）",
+  "scripts": {
+    "dev": "wrangler dev --env test",
+    "deploy:test": "wrangler deploy --env test",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "test:load": "node tests/load/load-test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261014.1",
+    "playwright-core": "^1.64.1",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.151.0"
+  },
+  "private": true,
+  "cloudflare": {
+    "bindings": {
+      "SETUP_TOKEN": {
+        "description": "**初期設定用の合言葉**（最初の管理者を作る時に1回だけ使います）。**12文字以上**の推測されにくい文字列を自分で決めて入力し、必ずメモしてください。ならブースのアプリの「主催者の方へ」の画面で作ることもできます。"
+      }
+    }
+  }
+}

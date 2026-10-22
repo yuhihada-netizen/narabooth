@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>初期設定（最初の管理者）</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>初期設定</h1>
+  <div id="envBadge" class="env-badge hidden" style="display:inline-block;margin-bottom:8px"></div>
+  <div id="done" class="banner ok hidden">初期設定が完了しています。<a href="/staff/">スタッフ画面へ</a>（ログイン後、「管理」タブの「使い方（説明書）」から始め方を確認できます）</div>
+  <form id="f" class="card hidden">
+    <p class="muted">公開時に Cloudflare に登録した<strong>初期設定用の合言葉（SETUP_TOKEN）</strong>を入力し、最初の全体管理者の役割名とパスワードを決めてください。この画面が使えるのは最初の1回だけです。</p>
+    <div id="msg" class="banner danger hidden" role="alert"></div>
+    <label for="token">初期設定用の合言葉</label>
+    <input id="token" type="password" autocomplete="off" required>
+    <label for="ev">イベント名（参加者の画面に表示されます。後から変更できます）</label>
+    <input id="ev" maxlength="40" placeholder="例：○○高校 文化祭 2年1組" required>
+    <label for="name">管理者の役割名（ログインに使います。例：責任者）</label>
+    <input id="name" required maxlength="30" placeholder="例：責任者">
+    <label for="pw">パスワード（6文字以上）</label>
+    <input id="pw" type="password" autocomplete="new-password" minlength="6" required>
+    <label for="pw2">パスワード（確認のためもう一度）</label>
+    <input id="pw2" type="password" autocomplete="new-password" minlength="6" required>
+    <div style="margin-top:16px"><button class="huge" id="btn">管理者を作成する</button></div>
+  </form>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  fetch("/api/info").then((r) => r.json()).then((info) => {
+    if (info.env) { $("envBadge").textContent = info.env; $("envBadge").classList.remove("hidden"); }
+    if (info.needsSetup) $("f").classList.remove("hidden"); else $("done").classList.remove("hidden");
+  }).catch(() => { $("f").classList.remove("hidden"); });
+  $("f").onsubmit = async (e) => {
+    e.preventDefault();
+    const show = (t) => { $("msg").textContent = t; $("msg").classList.remove("hidden"); };
+    if ($("pw").value !== $("pw2").value) return show("確認用のパスワードが一致しません");
+    $("btn").disabled = true;
+    try {
+      const r = await fetch("/api/setup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: $("token").value, eventName: $("ev").value, name: $("name").value, password: $("pw").value }) });
+      const b = await r.json();
+      if (!r.ok) return show(b.error || "作成できませんでした");
+      $("f").classList.add("hidden");
+      $("done").classList.remove("hidden");
+    } catch { show("通信できませんでした。もう一度お試しください。"); }
+    finally { $("btn").disabled = false; }
+  };
+</script>
+</body>
+</html>

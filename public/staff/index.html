@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>スタッフ画面</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/staff/staff.css">
+</head>
+<body>
+<!-- ログイン -->
+<section id="loginSec" class="wrap hidden">
+  <h1 style="margin-top:12px">スタッフ ログイン</h1>
+  <div id="loginEnv" class="env-badge hidden" style="display:inline-block;margin-bottom:8px"></div>
+  <form id="loginForm" class="card">
+    <div id="loginMsg" class="banner danger hidden" role="alert"></div>
+    <label for="lName">役割名（例：受付、ブースA）</label>
+    <input id="lName" autocomplete="username" required>
+    <label for="lPw">パスワード</label>
+    <input id="lPw" type="password" autocomplete="current-password" required>
+    <div style="margin-top:16px"><button class="huge" id="loginBtn">ログイン</button></div>
+    <p class="small muted">一度ログインすると、この端末では営業中ログインしたままになります（最長7日）。共用端末では使用後に「ログアウト」してください。</p>
+    <p class="small"><a href="/setup.html">初めて使う場合（最初の管理者の作成）</a></p>
+  </form>
+</section>
+
+<!-- アプリ本体 -->
+<div id="app" class="hidden">
+  <header class="top noprint">
+    <div class="row" style="justify-content:space-between;gap:6px">
+      <div class="row" style="gap:6px">
+        <span id="envBadge" class="env-badge hidden"></span>
+        <strong id="dayLabel"></strong>
+      </div>
+      <button class="mini ghost" data-act="account" id="meBtn"></button>
+    </div>
+    <div class="conn connecting" id="conn"><span class="dot"></span><span id="connText">接続中…</span></div>
+    <div id="pendingBanner" class="banner warn hidden" style="margin:6px 0 0"></div>
+    <div id="updateBanner" class="banner warn hidden" style="margin:6px 0 0">画面の新しい版があります。手が空いた時に <button class="mini" onclick="location.reload()">更新する</button>（予約データは消えません）</div>
+    <div id="offlineBanner" class="banner danger hidden" style="margin:6px 0 0">通信できません。表示は最後に受信した時点の情報です。操作は送信されません。紙での運営に切り替える場合は「管理」または「受付」の「印刷・保存」から待ち列を出力できます。</div>
+  </header>
+
+  <main class="wrap">
+    <section id="tab-reception" class="tab hidden"></section>
+    <section id="tab-booth" class="tab hidden"></section>
+    <section id="tab-notice" class="tab hidden"></section>
+    <section id="tab-comms" class="tab hidden"></section>
+    <section id="tab-stats" class="tab hidden"></section>
+    <section id="tab-admin" class="tab hidden"></section>
+    <section id="tab-print" class="tab hidden"></section>
+  </main>
+
+  <nav class="tabs noprint" id="tabs"></nav>
+</div>
+<div id="modalRoot"></div>
+<script type="module" src="/staff/staff.js"></script>
+</body>
+</html>

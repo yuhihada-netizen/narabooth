@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>受付状況</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .hero { text-align: center; padding: 18px 12px; }
+  .hero .num { font-size: 3.4rem; font-weight: 900; letter-spacing: .04em; line-height: 1.1; }
+  .hero .booth { font-size: 1.1rem; font-weight: 700; }
+  .state { border-radius: 14px; padding: 18px 16px; margin: 0 0 12px; text-align: center; }
+  .state .head { font-size: 1.45rem; font-weight: 900; line-height: 1.35; }
+  .state .detail { margin-top: 6px; }
+  .state.waiting { background: var(--info-bg); color: #123a85; }
+  .state.next { background: var(--warn-bg); color: #6b3d00; border: 3px solid #e7a321; }
+  .state.called { background: #d32f2f; color: #fff; animation: pulse 1.4s infinite; }
+  .state.playing { background: var(--ok-bg); color: var(--ok); }
+  .state.done { background: #eceef2; color: #333; }
+  .state.cancelled, .state.absent { background: var(--danger-bg); color: var(--danger); }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(211,47,47,.25); } }
+  dl.info { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+  dl.info dt { color: var(--muted); font-weight: 700; }
+  dl.info dd { margin: 0; font-weight: 700; font-size: 1.1rem; }
+  .booths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .booths button { font-size: 1.6rem; min-height: 64px; background: #fff; color: var(--text); border-color: var(--line); }
+  .booths button[aria-pressed="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .code-input { font-size: 1.8rem; letter-spacing: .4em; text-align: center; font-weight: 800; }
+  .num-input { font-size: 1.6rem; text-align: center; font-weight: 800; }
+  .notice { border-left: 5px solid #e7a321; background: #fffaf0; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; }
+  .sponsor { padding: 10px 12px; }
+  .sponsor-label { font-size: .75rem; color: var(--muted); margin-bottom: 6px; }
+  .sponsor a, .sponsor .sp { display: block; color: var(--text); text-decoration: none; }
+  .sponsor img { display: block; width: 100%; max-height: 220px; object-fit: contain; border-radius: 8px; background: #f4f5f7; }
+  .sponsor .sp-text { margin-top: 6px; font-weight: 600; }
+  .sponsor a .sp-text { color: var(--primary); text-decoration: underline; }
+  .sponsor-dots { text-align: center; margin-top: 6px; font-size: .7rem; color: var(--muted); letter-spacing: 4px; }
+  footer.status { position: sticky; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+</style>
+</head>
+<body>
+<div class="wrap" style="padding-bottom:24px">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <strong id="eventName"></strong>
+    <span id="envBadge" class="env-badge hidden"></span>
+  </div>
+
+  <!-- 入力画面 -->
+  <section id="entry" class="hidden">
+    <div class="card">
+      <h1 style="font-size:1.35rem">順番・待ち時間の確認</h1>
+      <p class="muted">受付で伝えられた<strong>受付番号</strong>と<strong>4桁の確認コード</strong>を入力してください。</p>
+      <div id="entryMsg" class="banner danger hidden" role="alert"></div>
+      <form id="entryForm" autocomplete="off">
+        <label>ブース</label>
+        <div class="booths" id="boothBtns"></div>
+        <label for="num">受付番号（例：A12。上でブースを選んだ場合は数字だけでも可）</label>
+        <input id="num" class="num-input" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="8" placeholder="例：A12" required>
+        <label for="code">確認コード（4桁）</label>
+        <input id="code" class="code-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" required>
+        <div style="margin-top:16px"><button class="huge" type="submit" id="entryBtn">表示する</button></div>
+      </form>
+      <p class="small muted" style="margin-top:12px">この端末では、次回から入力しなくても表示されます。アプリのインストールは不要です。</p>
+    </div>
+  </section>
+
+  <!-- 表示画面 -->
+  <section id="viewSec" class="hidden">
+    <div id="pauseBanner" class="banner warn hidden" role="alert"></div>
+    <div id="otherDay" class="banner info hidden"></div>
+    <div class="card hero">
+      <div class="booth" id="vBooth"></div>
+      <div class="num" id="vNum"></div>
+      <div class="small muted">受付番号</div>
+    </div>
+    <div id="vState" class="state"><div class="head" id="vHead"></div><div class="detail" id="vDetail"></div></div>
+    <div id="nextWrap" class="card center hidden">
+      <p style="margin:0 0 10px">ほかのブースに参加される場合は、受付で伝えられた新しい受付番号と確認コードを入力してください。</p>
+      <button class="big" id="nextBtn" type="button">次の受付番号を入力する</button>
+    </div>
+    <div class="card" id="vInfoCard">
+      <dl class="info" id="vInfo"></dl>
+    </div>
+    <div class="card" id="noticeCard">
+      <h2>お知らせ</h2>
+      <div id="vNotices"><p class="muted">現在お知らせはありません。</p></div>
+    </div>
+    <div class="card small muted">
+      <p style="margin:0">この画面は自動で更新されます。ただし、<strong>スマホの画面を閉じている間は更新・通知されません</strong>。ときどき画面を開いてご確認ください。</p>
+      <p style="margin:.5em 0 0">待ち時間は目安です。早く進むこともありますので、余裕をもってお戻りください。</p>
+    </div>
+  </section>
+
+  <section id="loading" class="center muted" style="padding:40px 0">読み込み中…</section>
+
+  <!-- 協賛・お知らせ枠（主催者が登録したもの。登録が無ければ表示しない） -->
+  <aside id="sponsorBox" class="card sponsor hidden" aria-label="協賛・お知らせ">
+    <div class="sponsor-label">協賛・お知らせ</div>
+    <div id="sponsorItem"></div>
+    <div id="sponsorDots" class="sponsor-dots"></div>
+  </aside>
+</div>
+<footer class="status hidden" id="statusBar">
+  <div class="row" style="justify-content:space-between">
+    <div class="conn connecting" id="conn"><span class="dot"></span><span id="connText">接続中…</span></div>
+    <button class="mini sub" id="reloadBtn" type="button">更新</button>
+  </div>
+</footer>
+<script type="module" src="/viewer.js"></script>
+</body>
+</html>

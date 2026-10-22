@@ -1,0 +1,32 @@
+// Cloudflare Workers の設定ファイル
+// ・既存の別 Worker と衝突しないよう、Worker 名は「narabooth」専用にしています。
+// ・パスワード等の秘密情報はここに書かず、Cloudflare の「シークレット」に登録します（docs/setup-guide.md 参照）。
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "narabooth",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*", "/ws"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "EVENT", "class_name": "EventDO" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["EventDO"] }],
+  "observability": { "enabled": false },
+  "workers_dev": true,
+  "preview_urls": false,
+  "env": {
+    // テスト環境：本番とは別の Worker・別のデータとして公開されます。
+    "test": {
+      "name": "narabooth-test",
+      "durable_objects": {
+        "bindings": [{ "name": "EVENT", "class_name": "EventDO" }]
+      },
+      "vars": { "ENV_LABEL": "テスト環境" }
+    }
+  }
+}

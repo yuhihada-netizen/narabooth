@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>掲示用QRコード</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .poster { background: #fff; text-align: center; padding: 24px; border-radius: 14px; border: 1px solid var(--line); }
+  .poster h1 { font-size: 2rem; }
+  #qr svg { width: min(80vw, 420px); height: auto; }
+  .url { font-size: 1.1rem; font-weight: 700; word-break: break-all; }
+  @media print { .poster { border: none; } .poster h1 { font-size: 2.6rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card noprint">
+    <h2>掲示用QRコードの作成</h2>
+    <p class="muted small">参加者用ページのアドレス（URL）から、掲示用のQRコードを作ります（全員共通）。スタッフ画面の「管理」→「参加者用QRコード」の「表示・印刷」から開くと、最新のアドレスが入った状態で開きます。インターネット上の別サービスは使わず、この画面の中で作成します。作成後「印刷する」で掲示用に印刷できます。</p>
+    <label for="url">参加者用ページのアドレス</label>
+    <input id="url">
+    <label for="title">見出し</label>
+    <input id="title" value="順番確認はこちら">
+    <div class="row" style="margin-top:12px"><button id="make" type="button">QRコードを作る</button><button class="sub" type="button" onclick="print()">印刷する</button></div>
+  </div>
+  <div class="poster">
+    <h1 id="ptitle"></h1>
+    <div id="qr"></div>
+    <p class="url" id="purl"></p>
+    <p id="pnote">受付で伝えられた<strong>受付番号</strong>と<strong>4桁の確認コード</strong>を入力すると、順番と待ち時間の目安が見られます。</p>
+  </div>
+</div>
+<script src="/vendor/qrcode.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const hp = new URLSearchParams(location.hash.slice(1));
+  const fromHash = hp.get("u");
+  if (hp.get("t") === "staff") {
+    // スタッフ用の招待QR（掲示しない）
+    document.title = "スタッフ用の招待QRコード";
+    $("title").value = "スタッフ用（関係者以外は読み取らないでください）";
+    $("pnote").innerHTML = "スタッフ用アプリの「招待QRを読み取る」、またはスマホのカメラで読み取ると、スタッフのログイン画面が開きます。<strong>役割名とパスワードは別に伝えてください。</strong>この QR コードは掲示しないでください。";
+    document.querySelector(".card.noprint h2").textContent = "スタッフ用の招待QRコード";
+  }
+  $("url").value = fromHash && fromHash.startsWith(location.origin + "/") ? fromHash : location.origin + "/";
+  function make() {
+    const q = qrcode(0, "M");
+    q.addData($("url").value.trim());
+    q.make();
+    $("qr").innerHTML = q.createSvgTag({ cellSize: 8, margin: 4, scalable: true });
+    $("purl").textContent = $("url").value.trim();
+    $("ptitle").textContent = $("title").value;
+  }
+  $("make").onclick = make;
+  make();
+</script>
+</body>
+</html>
